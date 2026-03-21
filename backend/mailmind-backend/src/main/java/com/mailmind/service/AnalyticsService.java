@@ -1,46 +1,3 @@
-//package com.mailmind.service;
-//
-//import com.mailmind.model.User;
-//import com.mailmind.repository.CampaignRepository;
-//import com.mailmind.repository.SmartReplyRepository;
-//import com.mailmind.repository.UserRepository;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.stereotype.Service;
-//import java.util.HashMap;
-//import java.util.Map;
-//
-//@Service
-//@RequiredArgsConstructor
-//public class AnalyticsService {
-//
-//    private final CampaignRepository campaignRepository;
-//    private final SmartReplyRepository smartReplyRepository;
-//    private final UserRepository userRepository;
-//
-//    public Map<String, Object> getDashboardStats(String email) {
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new RuntimeException("User not found"));
-//
-//        long totalCampaigns = campaignRepository.countByUserId(user.getId());
-//        long activeCampaigns = campaignRepository
-//                .findByUserIdAndStatus(user.getId(), "ACTIVE").size();
-//        long totalReplies = smartReplyRepository
-//                .findByUserIdOrderByCreatedAtDesc(user.getId()).size();
-//        long draftCampaigns = campaignRepository
-//                .findByUserIdAndStatus(user.getId(), "DRAFT").size();
-//
-//        Map<String, Object> stats = new HashMap<>();
-//        stats.put("totalCampaigns", totalCampaigns);
-//        stats.put("activeCampaigns", activeCampaigns);
-//        stats.put("draftCampaigns", draftCampaigns);
-//        stats.put("totalSmartReplies", totalReplies);
-//        stats.put("userName", user.getName());
-//
-//        return stats;
-//    }
-//}
-
-
 package com.mailmind.service;
 
 import com.mailmind.model.User;
@@ -53,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;

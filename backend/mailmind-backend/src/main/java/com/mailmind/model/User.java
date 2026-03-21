@@ -8,6 +8,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 @Entity
 @Table(name = "users")
@@ -28,11 +30,13 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    @NotBlank
+    @JsonIgnore
     private String password;
 
-    // Gmail OAuth tokens
+    @JsonIgnore
     private String gmailAccessToken;
+
+    @JsonIgnore
     private String gmailRefreshToken;
     private Long gmailTokenExpiresAt;
 

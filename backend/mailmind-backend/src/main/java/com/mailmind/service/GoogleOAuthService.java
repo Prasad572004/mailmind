@@ -11,7 +11,7 @@ import org.springframework.http.MediaType;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+//import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -62,40 +62,6 @@ public class GoogleOAuthService {
         }
     }
 
-    /**
-     * Exchange authorization code for access token
-     */
-//    public Map<String, Object> exchangeCodeForToken(String code) {
-//        try {
-//            // Prepare request body
-//            Map<String, String> tokenRequest = new HashMap<>();
-//            tokenRequest.put("client_id", clientId);
-//            tokenRequest.put("client_secret", clientSecret);
-//            tokenRequest.put("code", code);
-//            tokenRequest.put("grant_type", "authorization_code");
-//            tokenRequest.put("redirect_uri", redirectUri);
-//
-//            // Prepare headers
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//            // Make request to Google
-//            HttpEntity<String> request = new HttpEntity<>(gson.toJson(tokenRequest), headers);
-//            String response = restTemplate.postForObject(GOOGLE_TOKEN_URL, request, String.class);
-//
-//            // Parse response
-//            @SuppressWarnings("unchecked")
-//            Map<String, Object> tokenResponse = gson.fromJson(response, Map.class);
-//
-//            if (tokenResponse.get("error") != null) {
-//                throw new RuntimeException("Google OAuth error: " + tokenResponse.get("error"));
-//            }
-//
-//            return tokenResponse;
-//        } catch (Exception e) {
-//            throw new RuntimeException("Failed to exchange code for token: " + e.getMessage());
-//        }
-//    }
     
     public Map<String, Object> exchangeCodeForToken(String code) {
         try {
@@ -128,26 +94,27 @@ public class GoogleOAuthService {
     /**
      * Refresh access token using refresh token
      */
+  //updated after testing - Google expects form-encoded data, not JSON, for token refresh
     public Map<String, Object> refreshAccessToken(String refreshToken) {
         try {
-            // Prepare request body
-            Map<String, String> refreshRequest = new HashMap<>();
-            refreshRequest.put("client_id", clientId);
-            refreshRequest.put("client_secret", clientSecret);
-            refreshRequest.put("refresh_token", refreshToken);
-            refreshRequest.put("grant_type", "refresh_token");
+            // form-encoded — same as exchangeCodeForToken
+            String body = "client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8) +
+                          "&client_secret=" + URLEncoder.encode(clientSecret, StandardCharsets.UTF_8) +
+                          "&refresh_token=" + URLEncoder.encode(refreshToken, StandardCharsets.UTF_8) +
+                          "&grant_type=refresh_token";
 
-            // Prepare headers
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-            // Make request to Google
-            HttpEntity<String> request = new HttpEntity<>(gson.toJson(refreshRequest), headers);
+            HttpEntity<String> request = new HttpEntity<>(body, headers);
             String response = restTemplate.postForObject(GOOGLE_TOKEN_URL, request, String.class);
 
-            // Parse response
             @SuppressWarnings("unchecked")
             Map<String, Object> tokenResponse = gson.fromJson(response, Map.class);
+
+            if (tokenResponse.get("error") != null) {
+                throw new RuntimeException("Token refresh error: " + tokenResponse.get("error"));
+            }
 
             return tokenResponse;
         } catch (Exception e) {

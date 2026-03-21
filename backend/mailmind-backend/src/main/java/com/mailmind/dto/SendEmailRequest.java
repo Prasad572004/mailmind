@@ -1,29 +1,3 @@
-//package com.mailmind.dto;
-//
-//import java.util.List;
-//
-//import lombok.Data;
-//@Data
-//public class SendEmailRequest {
-//    private List<String> to;
-//    private String subject;
-//    private String body;
-//    private String campaignId;  // optional, for tracking
-//
-//    // Getters and Setters
-//    public List<String> getTo() { return to; }
-//    public void setTo(List<String> to) { this.to = to; }
-//
-//    public String getSubject() { return subject; }
-//    public void setSubject(String subject) { this.subject = subject; }
-//
-//    public String getBody() { return body; }
-//    public void setBody(String body) { this.body = body; }
-//
-//    public String getCampaignId() { return campaignId; }
-//    public void setCampaignId(String campaignId) { this.campaignId = campaignId; }
-//}
-
 package com.mailmind.dto;
 
 import java.util.List;

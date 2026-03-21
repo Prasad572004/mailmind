@@ -14,7 +14,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class googelauth {
 
     private final GoogleOAuthService googleOAuthService;
@@ -40,82 +40,7 @@ public class googelauth {
         }
     }
 
-    /**
-     * Google OAuth Callback
-     * POST /api/auth/google/callback
-     * Body: { "code": "...", "state": "..." }
-     */
-//    @PostMapping("/google/callback")
-//    public ResponseEntity<?> googleCallback(@RequestBody OAuthCallbackRequest request) {
-//        try {
-//            if (request.getCode() == null || request.getCode().isEmpty()) {
-//                return ResponseEntity.badRequest().body(Map.of(
-//                    "error", "Authorization code is required"
-//                ));
-//            }
-//
-//            // Exchange code for Gmail access token
-//            Map<String, Object> tokenResponse = googleOAuthService.exchangeCodeForToken(request.getCode());
-//            
-//            String accessToken = (String) tokenResponse.get("access_token");
-//            String refreshToken = (String) tokenResponse.get("refresh_token");
-////            Long expiresIn = (Long) tokenResponse.get("expires_in");
-//            Long expiresIn = ((Number) tokenResponse.get("expires_in")).longValue();
-//            if (accessToken == null) {
-//                return ResponseEntity.badRequest().body(Map.of(
-//                    "error", "Failed to get access token from Google"
-//                ));
-//            }
-//
-//            // Get user email from request (passed by frontend)
-//            String userEmail = request.getUserEmail();
-//            if (userEmail == null || userEmail.isEmpty()) {
-//                return ResponseEntity.badRequest().body(Map.of(
-//                    "error", "User email is required"
-//                ));
-//            }
-//
-//            // Find or create user
-//            User user = userRepository.findByEmail(userEmail)
-//                .orElseThrow(() -> new RuntimeException("User not found"));
-//
-//            // Save Gmail tokens
-//            user.setGmailAccessToken(accessToken);
-//            user.setGmailRefreshToken(refreshToken);
-//            
-////            // Calculate expiration time
-////            if (expiresIn != null) {
-////                long expirationTime = System.currentTimeMillis() + (expiresIn * 1000);
-////                user.setGmailTokenExpiresAt(new java.sql.Timestamp(expirationTime));
-////            }
-//
-//         // Calculate expiration time
-//            if (expiresIn != null) {
-//                long expirationTime = System.currentTimeMillis() + (expiresIn * 1000);
-//                user.setGmailTokenExpiresAt(expirationTime);
-//            }
-//            
-//            userRepository.save(user);
-//
-//            return ResponseEntity.ok(Map.of(
-//                "status", "success",
-//                "message", "Gmail account connected successfully",
-//                "user", Map.of(
-//                    "id", user.getId(),
-//                    "email", user.getEmail(),
-//                    "name", user.getName(),
-//                    "gmailConnected", true
-//                )
-//            ));
-//
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body(Map.of(
-//                "error", "OAuth callback failed: " + e.getMessage()
-//            ));
-//        }
-//    }
-
-    @PostMapping("/google/callback")
+     @PostMapping("/google/callback")
     public ResponseEntity<?> googleCallback(
             @RequestBody OAuthCallbackRequest request,
             @RequestHeader("Authorization") String token) {  // ADD THIS

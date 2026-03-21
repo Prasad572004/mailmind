@@ -79,4 +79,7 @@ public interface EmailRepository extends JpaRepository<Email, String> {
     @Query("SELECT e FROM Email e WHERE e.user = :user AND e.isSpam = false AND e.isTrash = false " +
            "ORDER BY e.receivedAt DESC")
     List<Email> findInboxEmails(@Param("user") User user);
+    
+    // Find emails in a thread for a user, ordered by received date
+    List<Email> findByUserAndThreadIdOrderByReceivedAtAsc(User user, String threadId);
 }

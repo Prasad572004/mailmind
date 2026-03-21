@@ -162,11 +162,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+//import org.springframework.http.HttpEntity;
+//import org.springframework.http.HttpHeaders;
+//import org.springframework.http.MediaType;
+import org.springframework.web.client.RestTemplate;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 import java.util.*;
 
@@ -230,18 +235,15 @@ public class AIService {
         return callGroqAPI(prompt);
     }
 
-    // =====================================================
-    // CALL GROQ API
-    // =====================================================
+  
+    // Updated callGroqAPI using RestTemplate instead of WebClient for simplicity
+    private final RestTemplate restTemplate;
+
     private String callGroqAPI(String prompt) {
         try {
-            log.info("Calling Groq API...");
-
-            WebClient client = WebClient.builder()
-                    .baseUrl(groqApiUrl)
-                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + groqApiKey)
-                    .build();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + groqApiKey);
 
             Map<String, Object> requestBody = new LinkedHashMap<>();
             requestBody.put("model", groqModel);
@@ -255,27 +257,18 @@ public class AIService {
             messages.add(userMsg);
             requestBody.put("messages", messages);
 
-            String response = client.post()
-                    .bodyValue(requestBody)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
+            HttpEntity<Map<String, Object>> request =
+                new HttpEntity<>(requestBody, headers);
+
+            String response = restTemplate.postForObject(
+                groqApiUrl, request, String.class);
 
             JsonNode jsonNode = objectMapper.readTree(response);
-            String content = jsonNode
-                    .get("choices").get(0)
-                    .get("message").get("content")
-                    .asText();
+            return jsonNode.get("choices").get(0)
+                    .get("message").get("content").asText();
 
-            log.info("Groq response received, length: {}", content.length());
-            return content;
-
-        } catch (WebClientResponseException e) {
-            log.error("Groq Error Status: {}", e.getStatusCode());
-            log.error("Groq Error Body: {}", e.getResponseBodyAsString());
-            throw new RuntimeException("AI Error: " + e.getStatusCode() + " | " + e.getResponseBodyAsString());
         } catch (Exception e) {
-            log.error("Unexpected error: {}", e.getMessage(), e);
+            log.error("Groq API error: {}", e.getMessage());
             throw new RuntimeException("AI Service Error: " + e.getMessage());
         }
     }
