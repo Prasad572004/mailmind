@@ -1,0 +1,30 @@
+# Dependencies - never push (100MB+)
+node_modules/
+node_modules
+
+# Build output
+dist/
+build/
+
+# Secrets
+.env
+.env.local
+.env.production
+.env.development
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+Thumbs.db:encryptable
+
+# Logs
+*.log
+logs/
+
+# Vite cache
+.vite/
