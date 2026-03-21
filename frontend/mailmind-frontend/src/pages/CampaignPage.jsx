@@ -327,12 +327,33 @@ export default function CampaignPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!id || !window.confirm('Delete this campaign?')) return
-    try {
-      await campaignAPI.delete(id)
-      setCampaigns(prev => prev.filter(c => getCampaignId(c) !== id))
-      toast.success('Deleted')
-    } catch { toast.error('Could not delete') }
+    if (!id) return
+    toast((t) => (
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-slate-700">Delete this campaign?</span>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id)
+              try {
+                await campaignAPI.delete(id)
+                setCampaigns(prev => prev.filter(c => getCampaignId(c) !== id))
+                toast.success('Deleted')
+              } catch { toast.error('Could not delete') }
+            }}
+            className="px-3 py-1 text-xs font-medium bg-red-500 hover:bg-red-600
+                       text-white rounded-lg transition-all">
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 text-xs font-medium bg-slate-200 hover:bg-slate-300
+                       text-slate-700 rounded-lg transition-all">
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000 })
   }
 
   const handleStatusChange = (id, status) => {

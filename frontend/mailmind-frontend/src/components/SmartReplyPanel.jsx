@@ -258,9 +258,10 @@ export default function SmartReplyPanel({ email, onReplySent }) {
               </button>
               <div className="w-px h-4 bg-slate-200 mx-1" />
               <button onClick={() => {
-                  const url = prompt('Enter URL:')
-                  if (url) insertFormat(`[`, `](${url})`)
-                }} title="Insert link"
+    const url = window.prompt('Enter URL:')
+    if (url && url.startsWith('http')) insertFormat(`[`, `](${url})`)
+    else if (url) insertFormat(`[`, `](https://${url})`)
+  }} title="Insert link"
                 className="p-1.5 rounded hover:bg-slate-100 text-slate-500
                            hover:text-slate-800 transition-colors">
                 <Link className="w-3.5 h-3.5" />
