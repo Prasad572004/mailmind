@@ -33,17 +33,22 @@ export default function InboxPage() {
     if (filter === 'sent') loadSentEmails()
   }, [filter])
 
-  const loadEmails = async () => {
-    try {
-      setLoading(true)
-      const res = await api.get('/api/inbox')
-      setEmails(res.data)
-    } catch (err) {
-      console.error('Failed to load emails:', err)
-    } finally {
-      setLoading(false)
-    }
+const loadEmails = async () => {
+  try {
+    setLoading(true)
+    const res = await api.get('/api/inbox')
+    // Sort newest first permanently
+    const sorted = (res.data || []).sort((a, b) =>
+      new Date(b.date) - new Date(a.date)
+    )
+    setEmails(sorted)
+  } catch (err) {
+    console.error('Failed to load emails:', err)
+    setEmails([])
+  } finally {
+    setLoading(false)
   }
+}
 
   const loadSentEmails = async () => {
     try {

@@ -18,11 +18,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AnalyticsService {
 
-    private final CampaignRepository     campaignRepository;
-    private final SmartReplyRepository   smartReplyRepository;
-    private final UserRepository         userRepository;
-    private final EmailRepository        emailRepository;
-    private final EmailReplyRepository   emailReplyRepository;
+    private final CampaignRepository   campaignRepository;
+    private final SmartReplyRepository smartReplyRepository;
+    private final UserRepository       userRepository;
+    private final EmailRepository      emailRepository;
+    private final EmailReplyRepository emailReplyRepository;
 
     public Map<String, Object> getDashboardStats(String email) {
         User user = userRepository.findByEmail(email)
@@ -30,24 +30,26 @@ public class AnalyticsService {
 
         // ── Campaign stats ──────────────────────────────────────
         long totalCampaigns  = campaignRepository.countByUserId(user.getId());
-        long activeCampaigns = campaignRepository.findByUserIdAndStatus(user.getId(), "ACTIVE").size();
-        long draftCampaigns  = campaignRepository.findByUserIdAndStatus(user.getId(), "DRAFT").size();
-        long sentCampaigns   = campaignRepository.findByUserIdAndStatus(user.getId(), "SENT").size();
+        long activeCampaigns = campaignRepository
+                .findByUserIdAndStatus(user.getId(), "ACTIVE").size();
+        long draftCampaigns  = campaignRepository
+                .findByUserIdAndStatus(user.getId(), "DRAFT").size();
+        long sentCampaigns   = campaignRepository
+                .findByUserIdAndStatus(user.getId(), "SENT").size();
 
-        // ── Smart reply stats ───────────────────────────────────
-        long totalSmartReplies = smartReplyRepository
-                .findByUserIdOrderByCreatedAtDesc(user.getId()).size();
+        // ── Smart reply stats — use COUNT not load all ──────────
+        long totalSmartReplies = smartReplyRepository.countByUserId(user.getId());
 
         // ── Inbox email stats ───────────────────────────────────
         List<com.mailmind.model.Email> allEmails = emailRepository.findInboxEmails(user);
-        long totalEmails  = allEmails.size();
-        long unreadEmails = allEmails.stream()
+        long totalEmails   = allEmails.size();
+        long unreadEmails  = allEmails.stream()
                 .filter(e -> Boolean.FALSE.equals(e.getIsRead())).count();
         long repliedEmails = allEmails.stream()
                 .filter(e -> Boolean.TRUE.equals(e.getIsReplied())).count();
 
-        // ── Replies sent (from email_replies table) ─────────────
-        long repliesSent = emailReplyRepository.findByUserOrderBySentAtDesc(user).size();
+        // ── Replies sent ────────────────────────────────────────
+        long repliesSent = emailReplyRepository.countByUser(user);
 
         // ── Reply rate ──────────────────────────────────────────
         long notReplied = totalEmails - repliedEmails;
@@ -55,7 +57,7 @@ public class AnalyticsService {
         replyRate.put("replied",    repliedEmails);
         replyRate.put("notReplied", Math.max(0, notReplied));
 
-        // ── Emails received per day — last 7 days ───────────────
+        // ── Emails per day — last 7 days ────────────────────────
         List<Map<String, Object>> emailsPerDay = buildEmailsPerDay(allEmails);
 
         // ── Top 5 senders ───────────────────────────────────────
@@ -63,9 +65,9 @@ public class AnalyticsService {
 
         // ── Campaign status breakdown ────────────────────────────
         Map<String, Object> campaignsByStatus = new LinkedHashMap<>();
-        campaignsByStatus.put("DRAFT",    draftCampaigns);
-        campaignsByStatus.put("ACTIVE",   activeCampaigns);
-        campaignsByStatus.put("SENT",     sentCampaigns);
+        campaignsByStatus.put("DRAFT",  draftCampaigns);
+        campaignsByStatus.put("ACTIVE", activeCampaigns);
+        campaignsByStatus.put("SENT",   sentCampaigns);
 
         // ── Recent campaigns (last 5) ────────────────────────────
         List<Map<String, Object>> recentCampaigns = campaignRepository
@@ -88,68 +90,51 @@ public class AnalyticsService {
 
         // ── Assemble response ────────────────────────────────────
         Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("userName",         user.getName());
-
-        // Email stats
-        stats.put("totalEmails",      totalEmails);
-        stats.put("unreadEmails",     unreadEmails);
-        stats.put("repliesSent",      repliesSent);
-        stats.put("repliedEmails",    repliedEmails);
-        stats.put("replyRate",        replyRate);
-        stats.put("emailsPerDay",     emailsPerDay);
-        stats.put("topSenders",       topSenders);
-
-        // Campaign stats
-        stats.put("totalCampaigns",   totalCampaigns);
-        stats.put("activeCampaigns",  activeCampaigns);
-        stats.put("draftCampaigns",   draftCampaigns);
-        stats.put("sentCampaigns",    sentCampaigns);
+        stats.put("userName",          user.getName());
+        stats.put("totalEmails",       totalEmails);
+        stats.put("unreadEmails",      unreadEmails);
+        stats.put("repliesSent",       repliesSent);
+        stats.put("repliedEmails",     repliedEmails);
+        stats.put("replyRate",         replyRate);
+        stats.put("emailsPerDay",      emailsPerDay);
+        stats.put("topSenders",        topSenders);
+        stats.put("totalCampaigns",    totalCampaigns);
+        stats.put("activeCampaigns",   activeCampaigns);
+        stats.put("draftCampaigns",    draftCampaigns);
+        stats.put("sentCampaigns",     sentCampaigns);
         stats.put("campaignsByStatus", campaignsByStatus);
-        stats.put("recentCampaigns",  recentCampaigns);
-
-        // Smart reply stats
+        stats.put("recentCampaigns",   recentCampaigns);
         stats.put("totalSmartReplies", totalSmartReplies);
-
-        // Monthly combined
-        stats.put("monthlyCampaigns", monthlyActivity);
+        stats.put("monthlyCampaigns",  monthlyActivity);
 
         return stats;
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Build emails-per-day for the last 7 days
-    // ─────────────────────────────────────────────────────────
     private List<Map<String, Object>> buildEmailsPerDay(
             List<com.mailmind.model.Email> emails) {
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM dd");
         LocalDate today = LocalDate.now();
 
-        // Count emails per date
         Map<LocalDate, Long> countMap = emails.stream()
                 .filter(e -> e.getReceivedAt() != null)
                 .filter(e -> e.getReceivedAt().toLocalDate()
                         .isAfter(today.minusDays(7)))
                 .collect(Collectors.groupingBy(
                         e -> e.getReceivedAt().toLocalDate(),
-                        Collectors.counting()
-                ));
+                        Collectors.counting()));
 
-        // Build list for last 7 days in order (oldest → newest)
         List<Map<String, Object>> result = new ArrayList<>();
         for (int i = 6; i >= 0; i--) {
             LocalDate date = today.minusDays(i);
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("date",  date.format(fmt));
             entry.put("count", countMap.getOrDefault(date, 0L));
-            result.add(entry)  ;
+            result.add(entry);
         }
         return result;
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Build top 5 senders by email count
-    // ─────────────────────────────────────────────────────────
     private List<Map<String, Object>> buildTopSenders(
             List<com.mailmind.model.Email> emails) {
 
@@ -157,8 +142,7 @@ public class AnalyticsService {
                 .filter(e -> e.getFrom() != null)
                 .collect(Collectors.groupingBy(
                         e -> extractEmailAddress(e.getFrom()),
-                        Collectors.counting()
-                ))
+                        Collectors.counting()))
                 .entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .limit(5)
@@ -171,16 +155,12 @@ public class AnalyticsService {
                 .collect(Collectors.toList());
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Build monthly activity for last 6 months
-    // ─────────────────────────────────────────────────────────
     private List<Map<String, Object>> buildMonthlyActivity(
             List<com.mailmind.model.Email> emails, User user) {
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM");
         LocalDate today = LocalDate.now();
 
-        // Emails received per month
         Map<String, Long> emailsPerMonth = emails.stream()
                 .filter(e -> e.getReceivedAt() != null)
                 .filter(e -> e.getReceivedAt().toLocalDate()
@@ -188,37 +168,33 @@ public class AnalyticsService {
                 .collect(Collectors.groupingBy(
                         e -> e.getReceivedAt().toLocalDate()
                                 .withDayOfMonth(1).format(fmt),
-                        Collectors.counting()
-                ));
+                        Collectors.counting()));
 
-        // Replies sent per month
-        Map<String, Long> repliesPerMonth = emailReplyRepository
-                .findByUserOrderBySentAtDesc(user).stream()
+        // Use count query instead of loading all replies
+        List<com.mailmind.model.EmailReply> recentReplies =
+                emailReplyRepository.findByUserAndSentAtAfter(
+                        user, today.minusMonths(6).atStartOfDay());
+
+        Map<String, Long> repliesPerMonth = recentReplies.stream()
                 .filter(r -> r.getSentAt() != null)
-                .filter(r -> r.getSentAt().toLocalDate()
-                        .isAfter(today.minusMonths(6)))
                 .collect(Collectors.groupingBy(
                         r -> r.getSentAt().toLocalDate()
                                 .withDayOfMonth(1).format(fmt),
-                        Collectors.counting()
-                ));
+                        Collectors.counting()));
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (int i = 5; i >= 0; i--) {
             LocalDate month = today.minusMonths(i).withDayOfMonth(1);
             String label = month.format(fmt);
             Map<String, Object> entry = new LinkedHashMap<>();
-            entry.put("month",    label);
-            entry.put("emails",   emailsPerMonth.getOrDefault(label, 0L));
-            entry.put("replies",  repliesPerMonth.getOrDefault(label, 0L));
+            entry.put("month",   label);
+            entry.put("emails",  emailsPerMonth.getOrDefault(label, 0L));
+            entry.put("replies", repliesPerMonth.getOrDefault(label, 0L));
             result.add(entry);
         }
         return result;
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Extract clean email address from "Name <email>" format
-    // ─────────────────────────────────────────────────────────
     private String extractEmailAddress(String from) {
         if (from != null && from.contains("<") && from.contains(">")) {
             return from.substring(from.indexOf("<") + 1, from.indexOf(">")).trim();

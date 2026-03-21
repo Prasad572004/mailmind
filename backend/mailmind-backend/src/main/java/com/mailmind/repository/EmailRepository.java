@@ -76,9 +76,10 @@ public interface EmailRepository extends JpaRepository<Email, String> {
     Long countByUserAndIsReadFalse(User user);
 
     // Find inbox emails (not spam, not trash)
-    @Query("SELECT e FROM Email e WHERE e.user = :user AND e.isSpam = false AND e.isTrash = false " +
-           "ORDER BY e.receivedAt DESC")
-    List<Email> findInboxEmails(@Param("user") User user);
+    @Query("SELECT e FROM Email e WHERE e.user = :user " +
+    	       "AND e.isTrash = false AND e.isSpam = false " +
+    	       "ORDER BY e.receivedAt DESC")
+    	List<Email> findInboxEmails(@Param("user") User user);
     
     // Find emails in a thread for a user, ordered by received date
     List<Email> findByUserAndThreadIdOrderByReceivedAtAsc(User user, String threadId);

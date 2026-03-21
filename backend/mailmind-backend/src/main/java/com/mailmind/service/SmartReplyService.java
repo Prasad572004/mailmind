@@ -54,9 +54,11 @@ public class SmartReplyService {
     // Get reply history for a user
     public List<SmartReply> getReplyHistory(String email) {
         User user = getUserByEmail(email);
-        return smartReplyRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+        return smartReplyRepository.findByUserIdOrderByCreatedAtDesc(
+            user.getId(),
+            org.springframework.data.domain.PageRequest.of(0, 20)
+        );
     }
-
     // Delete a reply
     public void deleteReply(Long id, String email) {
         SmartReply reply = smartReplyRepository.findById(id)
