@@ -89,7 +89,9 @@ export default function InboxPage() {
     e.preventDefault()
     if (!searchQuery.trim()) { loadEmails(); return }
     try {
-      const res = await api.get(`/api/inbox/search?query=${searchQuery}`)
+      // const res = await api.get(`/api/inbox/search?query=${searchQuery}`)
+      //Update: encodeURIComponent to handle special characters in search query
+      const res = await api.get(`/api/inbox/search?query=${encodeURIComponent(searchQuery.trim())}`)
       setEmails(res.data)
     } catch (err) {
       toast.error('Search failed')

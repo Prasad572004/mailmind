@@ -9,18 +9,46 @@ export function AuthProvider({ children }) {
   const [token,   setToken]   = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // On every app load — rehydrate from localStorage then refresh Gmail status
+  // // On every app load — rehydrate from localStorage then refresh Gmail status
+  // useEffect(() => {
+  //   const savedToken = localStorage.getItem('mailmind_token')
+  //   const savedUser  = localStorage.getItem('mailmind_user')
+  //   if (savedToken && savedUser) {
+  //     setToken(savedToken)
+  //     setUser(JSON.parse(savedUser))
+  //     // Always re-check Gmail connection from backend so banner is accurate
+  //     refreshGmailStatus(savedToken)
+  //   }
+  //   setLoading(false)
+  // }, [])
+
+  // Updated useEffect to check JWT expiration before rehydrating
   useEffect(() => {
     const savedToken = localStorage.getItem('mailmind_token')
     const savedUser  = localStorage.getItem('mailmind_user')
     if (savedToken && savedUser) {
-      setToken(savedToken)
-      setUser(JSON.parse(savedUser))
-      // Always re-check Gmail connection from backend so banner is accurate
-      refreshGmailStatus(savedToken)
+        // Check if JWT is expired before rehydrating
+        try {
+            const payload = JSON.parse(atob(savedToken.split('.')[1]))
+            const isExpired = payload.exp * 1000 < Date.now()
+            if (isExpired) {
+                localStorage.removeItem('mailmind_token')
+                localStorage.removeItem('mailmind_user')
+                setLoading(false)
+                return
+            }
+        } catch {
+            localStorage.removeItem('mailmind_token')
+            localStorage.removeItem('mailmind_user')
+            setLoading(false)
+            return
+        }
+        setToken(savedToken)
+        setUser(JSON.parse(savedUser))
+        refreshGmailStatus(savedToken)
     }
     setLoading(false)
-  }, [])
+}, [])
 
   // Hits GET /api/auth/google/status and updates gmailConnected in state + localStorage
   const refreshGmailStatus = async (authToken) => {

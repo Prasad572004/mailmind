@@ -32,10 +32,10 @@ api.interceptors.response.use(
   }
 )
 
-const GMAIL_SCOPES = [
-  'https://www.googleapis.com/auth/gmail.send',
-  'https://www.googleapis.com/auth/gmail.readonly', // ADD THIS
-  'https://www.googleapis.com/auth/gmail.modify'     // ADD THIS
-];
+// const GMAIL_SCOPES = [
+//   'https://www.googleapis.com/auth/gmail.send',
+//   'https://www.googleapis.com/auth/gmail.readonly', // ADD THIS
+//   'https://www.googleapis.com/auth/gmail.modify'     // ADD THIS
+// ];
 
 export default api
