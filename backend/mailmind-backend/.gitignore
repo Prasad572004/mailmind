@@ -1,6 +1,6 @@
 # SECRETS - CRITICAL
-src/main/resources/application.properties
-application.properties
+# src/main/resources/application.properties
+# application.properties
 
 # Compiled class file
 *.class
