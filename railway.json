@@ -1,0 +1,8 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "cd backend/mailmind-backend && mvn spring-boot:run -DskipTests"
+  }
+}
